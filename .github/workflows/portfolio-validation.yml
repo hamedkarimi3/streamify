@@ -1,0 +1,24 @@
+name: Static data pipeline checks
+on:
+  push:
+    branches: [main, feature/gansa-production-readiness]
+  pull_request:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check Python and JSON syntax
+        run: |
+          python - <<'PY'
+          import ast, json
+          from pathlib import Path
+          for p in Path('.').rglob('*.py'):
+              if '.git' not in p.parts: ast.parse(p.read_text(encoding='utf-8-sig'), filename=str(p))
+          for p in Path('.').rglob('*.json'):
+              if '.git' not in p.parts: json.loads(p.read_text(encoding='utf-8-sig'))
+          print('Static validation passed (does not certify deployment).')
+          PY
